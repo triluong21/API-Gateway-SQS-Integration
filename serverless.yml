@@ -1,0 +1,149 @@
+service: api-gateway-sqs
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  tracing:
+    apiGateway: true # enable tracing
+    lambda: true
+  logs:
+    restApi: true
+  deploymentBucket:
+    name: triluong21-serverless-deployments  # Bucket to deploy to        
+  stage: ${opt:stage, 'dev'} # Stage or feature branch (TVL-001).  Default is dev
+  backendStage: ${opt:backendStage, self:provider.stage} # used for other services and system variables so feature branches can use existing config.
+  region: us-east-1
+  stackTags:
+    Name: ${self:service}
+    Description: "API Gateway And SQS Integration"
+    CostCenter: "010"
+    BusinessUnit: Self
+    Product: None
+    Application: NoApp
+    Environment: nonprod
+    SupportTeam: triluong21@gmail.com    
+
+
+resources:
+  Resources:
+    DistributionQueue:
+      Type: AWS::SQS::Queue 
+      Properties:
+        QueueName: Transaction-Distribution-Queue
+
+    DistributionQueuePolicy:
+      Type: AWS::SQS::QueuePolicy 
+      Properties:
+        PolicyDocument:
+          Statement:
+            - Action: SQS:*
+              Effect: Allow
+              Resource: !GetAtt DistributionQueue.Arn    
+        Queues:
+          - !Ref DistributionQueue
+
+    IntakeApIGateway:
+      Type: AWS::ApiGateway::RestApi 
+      Properties:
+        Name: Transaction-Intake-API
+
+    IntakeApIGatewayRole:
+      Type: AWS::IAM::Role 
+      Properties:
+        AssumeRolePolicyDocument:
+          Statement:
+            - Action:
+                - sts:AssumeRole 
+              Effect: Allow    
+              Principal:
+                Service:
+                  - apigateway.amazonaws.com
+        Path: /
+        Policies:
+          - PolicyDocument:
+              Statement:
+                - Action: sqs:SendMessage
+                  Effect: Allow
+                  Resource: !GetAtt DistributionQueue.Arn 
+                - Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Effect: Allow
+                  Resource: "*"
+            PolicyName: apigateway-sqs-send-msg-policy 
+        RoleName: apigateway-sqs-send-msg-role 
+
+    IntakeAPIPostMethod:
+      Type: AWS::ApiGateway::Method 
+      Properties:
+        AuthorizationType: NONE 
+        HttpMethod: POST 
+        Integration:
+          Credentials: !GetAtt IntakeApIGatewayRole.Arn 
+          IntegrationHttpMethod: POST 
+          IntegrationResponses: 
+            - StatusCode: "200"
+          PassthroughBehavior: NEVER
+          RequestParameters: 
+            integration.request.header.Content-Type: '''application/x-www-form-urlencoded''' 
+          RequestTemplates:
+            application/json: Action=SendMessage&MessageBody=$input.body 
+          Type: AWS 
+          Uri:  !Join
+            - ''
+            - - 'arn:aws:apigateway:'
+              - !Ref 'AWS::Region'
+              - :sqs:path/
+              - !Ref 'AWS::AccountId'
+              - /
+              - 'Transaction-Distribution-Queue'
+        MethodResponses:
+          - ResponseModels:
+              application/json: Empty
+            StatusCode: "200"
+        ResourceId:  !Ref APIEnqueueResouce
+        RestApiId: !Ref IntakeApIGateway   
+        
+    APIEnqueueResouce:
+      Type: AWS::ApiGateway::Resource 
+      Properties:
+        ParentId: !Ref APIV1Resource 
+        PathPart: enqueue
+        RestApiId: !Ref IntakeApIGateway       
+
+    APIV1Resource:
+      Type: AWS::ApiGateway::Resource 
+      Properties:
+        ParentId: !GetAtt IntakeApIGateway.RootResourceId
+        PathPart: v1
+        RestApiId: !Ref IntakeApIGateway 
+        
+    prodDeployment:
+      Type: AWS::ApiGateway::Deployment
+      DependsOn: IntakeAPIPostMethod
+      Properties:
+        RestApiId: !Ref IntakeApIGateway
+    
+    prodStage:
+      Type: AWS::ApiGateway::Stage
+      Properties:
+        DeploymentId: !Ref 'prodDeployment'
+        RestApiId: !Ref IntakeApIGateway
+        StageName: prod
+          
+
+  Outputs:
+    DistributorQueueArn:
+      Description: "Arn of Transaction Distribution Queue"
+      Value: !GetAtt DistributionQueue.Arn
+    ApiEndpoint:
+      Description: Endpoint for this stage of the api
+      Value: !Join
+        - ''
+        - - https://
+          - !Ref 'IntakeApIGateway'
+          - .execute-api.
+          - !Ref 'AWS::Region'
+          - .amazonaws.com/
+          - prod

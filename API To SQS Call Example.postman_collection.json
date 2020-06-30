@@ -1,0 +1,83 @@
+{
+	"info": {
+		"_postman_id": "c88a81a3-ce89-45bc-b4f7-e437f0d755c6",
+		"name": "API To SQS Call Example",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "API To SQS Call ",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "awsv4",
+					"awsv4": [
+						{
+							"key": "sessionToken",
+							"value": "FwoGZXIvYXdzEJb//////////wEaDFqdm5KotDgHQQZkIiK/AdzXUGOrWI+eg3MdHJ+UowUpfNCWPyMocLK8rH6MD2AAA57UkCL09QEzh1JN+w/73MWb6CbWDM+ru59MSU2jxrEV5SLfyTBuYnPYZF6x9VcdlkqxoiPW+eZq345Xwffxc6rllyAhiA/fStKtoB5hGxIiX9J2O536KQ7OB0BcCGNtKkZ/a1gPxXPHNAF1R2w8jQIAOzN4kfzNXYoqFKzUNOV0VdDzCG0AzavfOAj7XDnZX7q4JWIt9c7P2NjaH0NSKMyc6fcFMi2OPkYHS1Ewga5TJTqFFX8+HEaBTsApDofzj/BiPg07hC9FBly7IlOJtJBv8+Y=",
+							"type": "string"
+						},
+						{
+							"key": "secretKey",
+							"value": "xDPfezrIxjg2apBlbttjK1odCmWWnk2R0Chm6qnT",
+							"type": "string"
+						},
+						{
+							"key": "accessKey",
+							"value": "ASIAYS6MNKJXTVTCP3H4",
+							"type": "string"
+						},
+						{
+							"key": "service",
+							"value": "execute-api",
+							"type": "string"
+						},
+						{
+							"key": "region",
+							"value": "us-east-1",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"finally\": \"I got it\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://z3tt2so9h4.execute-api.us-east-1.amazonaws.com/prod/v1/enqueue",
+					"protocol": "https",
+					"host": [
+						"z3tt2so9h4",
+						"execute-api",
+						"us-east-1",
+						"amazonaws",
+						"com"
+					],
+					"path": [
+						"prod",
+						"v1",
+						"enqueue"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}
