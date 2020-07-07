@@ -23,6 +23,8 @@ provider:
     Environment: nonprod
     SupportTeam: triluong21@gmail.com    
 
+  environment:
+    DistributionQueue_URL: !Ref DistributionQueue
 
 resources:
   Resources:
@@ -86,7 +88,14 @@ resources:
             - StatusCode: "200"
           PassthroughBehavior: NEVER
           RequestParameters: 
-            integration.request.header.Content-Type: '''application/x-www-form-urlencoded''' 
+            integration.request.header.Content-Type: '''application/x-www-form-urlencoded'''
+            # integration.request.querystring.Action: "'SendMessage'" 
+            # integration.request.querystring.MessageBody: "method.request.body.message"
+            # integration.request.querystring.MessageAttribute.1.Name: "'hoge'"
+            # integration.request.querystring.MessageAttribute.1.Value.StringValue: "method.request.body.hoge"
+            # integration.request.querystring.MessageAttribute.1.Value.DataType: "'String'"
+            integration.request.querystring.QueueUrl: '''http://yourqueueurl.aws'''
+            integration.request.querystring.MessageBody: method.request.body
           RequestTemplates:
             application/json: Action=SendMessage&MessageBody=$input.body 
           Type: AWS 
